@@ -1,3 +1,4 @@
+from langchain_core.runnables import RunnablePassthrough
 from dotenv import load_dotenv
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -22,6 +23,17 @@ explain_prompt = ChatPromptTemplate.from_messages([
         ("human", "Explain the following code in simple words:\n{code}")
 ])
 
-seq = code_prompt | model | parser | explain_prompt | model | parser
+seq = code_prompt | model | parser 
 
-seq. invoke
+seq2 = RunnableParallel({
+        "code" : RunnablePassthrough(),
+        "explanation": explain_prompt | model | parser
+})
+
+chain = seq | seq2
+
+result = chain.invoke({"topic": "please write a code of palindrome in python"})
+
+print(result["code"])
+print("\n")
+print(result["explanation"])
