@@ -8,54 +8,70 @@ Welcome to the **Generative AI Engineering Workspace**! This repository is organ
 
 ```text
 generative-ai/
-├── agents/                   # AI Agent architectures & Human-in-the-Loop workflows
-│   ├── create_agent.py       # High-level agent with middleware (wrap_tool_call) & HITL approval
-│   └── manual_agents.py      # Low-level manual agent loop, tool dispatch & state management
+├── agents/                           # Autonomous agents & stateful graph workflows
+│   ├── langchain/                    # LangChain agent architectures
+│   │   ├── create_agent.py           # High-level agent with middleware (wrap_tool_call) & HITL approval
+│   │   └── manual_agents.py          # Low-level manual agent loop, tool dispatch & state management
+│   │
+│   ├── langgraph/                    # Stateful multi-stage and parallel graph workflows
+│   │   ├── state.py                  # State schemas (TypedDict, Pydantic BaseModel, Dataclass, MessagesState)
+│   │   ├── sequential_workflow/
+│   │   │   └── sequential_base.py    # Multi-stage linear pipeline (Editor -> Script Writer -> Translator)
+│   │   └── parallel_workflow/
+│   │       └── parallel_reducers.py  # Concurrent fan-out/fan-in nodes with custom state reducers
+│   │
+│   └── README.md                     # Dedicated agent & LangGraph architecture documentation
 │
-├── rag/                      # Retrieval-Augmented Generation module
-│   ├── main.py               # Interactive CLI RAG chatbot grounded on vector documents
-│   ├── create_data.py        # PDF document loader, chunker, embeddings & ChromaDB storage
-│   ├── test.py               # Benchmark & compare Similarity Search vs. MMR retrieval
-│   ├── requirements.txt      # RAG module dependencies
-│   ├── README.md             # Dedicated RAG documentation
-│   └── documents-loaders/    # Sample data and document loading experiments
+├── rag/                              # Retrieval-Augmented Generation module
+│   ├── main.py                       # Interactive CLI RAG chatbot grounded on vector documents
+│   ├── create_data.py                # PDF document loader, chunker, embeddings & ChromaDB storage
+│   ├── test.py                       # Benchmark & compare Similarity Search vs. MMR retrieval
+│   ├── requirements.txt              # RAG module dependencies
+│   ├── README.md                     # Dedicated RAG documentation
+│   └── documents-loaders/            # Sample data and document loading experiments
 │
-├── runnables/                # LangChain Expression Language (LCEL) pipelines
-│   ├── sequencerunnable.py   # Basic sequential chain (prompt | model | parser)
-│   ├── parallelrunnable.py   # Multi-branch concurrent execution (RunnableParallel & RunnableLambda)
-│   ├── runnablepassthrough.py# Advanced data routing (RunnablePassthrough & RunnableParallel)
-│   └── requirements.txt      # Runnables dependencies
+├── runnables/                        # LangChain Expression Language (LCEL) pipelines
+│   ├── sequencerunnable.py           # Basic sequential chain (prompt | model | parser)
+│   ├── parallelrunnable.py           # Multi-branch concurrent execution (RunnableParallel & RunnableLambda)
+│   ├── runnablepassthrough.py        # Advanced data routing (RunnablePassthrough & RunnableParallel)
+│   └── requirements.txt              # Runnables dependencies
 │
-├── tools/                    # Tool definitions, binding & search integrations
-│   ├── toolcalling.py        # Custom @tool creation, LLM tool binding & invocation
-│   ├── newssummarizer.py     # Live search integration (Tavily) chained with summarizer LLM
-│   └── requirements.txt      # Tools dependencies
+├── tools/                            # Tool definitions, binding & search integrations
+│   ├── toolcalling.py                # Custom @tool creation, LLM tool binding & invocation
+│   ├── newssummarizer.py             # Live search integration (Tavily) chained with summarizer LLM
+│   └── requirements.txt              # Tools dependencies
 │
-├── requirements.txt          # Root project dependencies
-├── .env                      # API keys & environment configuration (git-ignored)
-└── README.md                 # Workspace documentation
+├── requirements.txt                  # Root project dependencies
+├── .env                              # API keys & environment configuration (git-ignored)
+└── README.md                         # Workspace documentation
 ```
 
 ---
 
 ## 🚀 Core Architecture & Modules
 
-### 1. 🤖 [AI Agents & Human-in-the-Loop (`agents/`)](agents/)
-Covers autonomous AI agent implementations, function calling, tool orchestration, and interactive human verification.
+### 1. 🤖 [AI Agents & LangGraph Workflows (`agents/`)](agents/README.md)
+Covers autonomous agent patterns, function calling with Human-in-the-Loop (HITL), and stateful graph orchestrations with LangGraph.
 
-- **Key Implementations**:
-  - **High-Level Agent (`create_agent.py`)**: Built with LangChain's `create_agent` and modern middleware (`@wrap_tool_call`) for real-time Human-in-the-Loop (HITL) tool execution approval.
-  - **Manual Agent Loop (`manual_agents.py`)**: A transparent, low-level implementation of the ReAct/agent loop that handles message state (`HumanMessage`, `AIMessage`, `ToolMessage`, `SystemMessage`), tool dispatch, denial handling, and multi-turn conversation.
-  - **Integrated Tools**:
-    - `get_weather`: Live city weather via **OpenWeatherMap API**.
-    - `get_news`: Live city news via **Tavily Search API**.
+- **LangChain Agents (`agents/langchain/`)**:
+  - **High-Level Agent (`create_agent.py`)**: Built with LangChain's `create_agent` and `@wrap_tool_call` middleware for human verification of tool executions before running.
+  - **Manual Agent Loop (`manual_agents.py`)**: A transparent, low-level ReAct loop managing explicit message states (`HumanMessage`, `AIMessage`, `ToolMessage`, `SystemMessage`) and tool dispatch.
+  - **Tools**: Live weather via **OpenWeatherMap API** and live news via **Tavily Search API**.
+
+- **LangGraph Workflows (`agents/langgraph/`)**:
+  - **State Schemas (`state.py`)**: State representation with `TypedDict`, `Pydantic BaseModel` (with `@field_validator`), `@dataclass`, and `MessagesState`.
+  - **Sequential Pipeline (`sequential_workflow/sequential_base.py`)**: Linear multi-stage graph using Groq LLM: `START` -> `editor` -> `script_writer` -> `translator` -> `END`.
+  - **Parallel Execution & Custom Reducers (`parallel_workflow/parallel_reducers.py`)**: Fan-out / fan-in evaluation architecture running toxicity, copyright, and cultural sensitivity checks concurrently. Merges output dictionaries using custom reducer functions via `Annotated`.
+
 - **Quick Run**:
   ```bash
-  # Run modern agent with middleware & HITL
-  python agents/create_agent.py
+  # LangChain agents
+  python agents/langchain/create_agent.py
+  python agents/langchain/manual_agents.py
 
-  # Run low-level manual agent loop
-  python agents/manual_agents.py
+  # LangGraph workflows
+  python agents/langgraph/sequential_workflow/sequential_base.py
+  python agents/langgraph/parallel_workflow/parallel_reducers.py
   ```
 
 ---
@@ -126,7 +142,7 @@ source .venv/bin/activate
 
 ### 2. Install Dependencies
 
-Install the comprehensive root requirements:
+Install the root project dependencies:
 ```bash
 pip install -r requirements.txt
 pip install tavily-python rich
@@ -139,6 +155,9 @@ Create a `.env` file at the project root with your API credentials:
 ```env
 # Mistral AI (Chat & Embeddings)
 MISTRAL_API_KEY=your_mistral_api_key_here
+
+# Groq (High-speed LangGraph workflow models)
+GROQ_API_KEY=your_groq_api_key_here
 
 # OpenWeather (Weather Tool)
 OPENWEATHER_API_KEY=your_openweather_api_key_here
@@ -154,7 +173,8 @@ TAVILY_API_KEY=your_tavily_api_key_here
 - [x] **Retrieval-Augmented Generation (RAG)**: Ingestion, ChromaDB vector store, MMR search, grounded chatbot.
 - [x] **LangChain Expression Language (LCEL)**: Sequential chains, `RunnableParallel`, `RunnablePassthrough`, `RunnableLambda`.
 - [x] **Tools & External APIs**: Custom tool definition, model tool-binding, Tavily Search & OpenWeather integrations.
-- [x] **AI Agents & Human-in-the-Loop**: Tool calling agents, middleware interception, manual vs. high-level agent loops.
-- [ ] **LangGraph Workflows**: Stateful multi-agent graphs, cycles, and persistent checkpointing.
+- [x] **AI Agents & Human-in-the-Loop**: Tool calling agents, middleware interception (`wrap_tool_call`), manual vs. high-level agent loops.
+- [x] **LangGraph Workflows**: Stateful graph pipelines, `TypedDict`/`Pydantic` states, linear sequential chains, and parallel fan-out/fan-in with custom reducers.
+- [ ] **Cyclic Multi-Agent Systems**: Supervisor-worker patterns, conditional branching, and persistent SQLite checkpointing.
 - [ ] **Fine-Tuning & Quantization**: Parameter-efficient fine-tuning (PEFT/LoRA) workflows.
 - [ ] **Multimodal AI**: Vision & audio pipelines.

@@ -6,6 +6,7 @@ langchain-openai
 langchain-google-genai
 langchain-groq
 langchain-mistralai
+langgraph
 chromadb
 sentence-transformers
 pypdf
